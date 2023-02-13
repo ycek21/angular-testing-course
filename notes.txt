@@ -1,0 +1,48 @@
+Section 1
+
+Jasmine is a behavoir driven Javascript testing framework and is available in angular.
+
+
+A group of specifications is called a test suite. Specification is simply a funcitonal test.
+Specification is meant to test a particular functional feature of an application.
+Each Specification should be described by a sentence. It starts with fucntion 'it()'
+
+describe("CalculatorService", () => {
+  it("should add two numbers", () => {
+    //it means test is not ready to run
+    pending();
+  });
+
+  it("should add subtract numbers", () => {
+    //simulate test fail
+    fail();
+  });
+});
+
+
+
+
+ng test --no-watch --- run tests without hot reload option
+
+
+FIRST TESt
+describe("CalculatorService", () => {
+  it("should add two numbers", () => {
+    const calculatorService = new CalculatorService(new LoggerService());
+
+    const result = calculatorService.add(2, 2);
+
+    expect(result).toBe(4);
+  });
+
+  it("should add subtract numbers", () => {
+    const calculatorService = new CalculatorService(new LoggerService());
+
+    const result = calculatorService.subtract(2, 2);
+
+    expect(result).toBe(0, "unexpected subtraction result");
+  });
+});
+
+JASMINE SPIES
+
