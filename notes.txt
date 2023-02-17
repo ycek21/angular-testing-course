@@ -45,4 +45,32 @@ describe("CalculatorService", () => {
 });
 
 JASMINE SPIES
+Spying allows us to keep track how many times a function is called.
+ We can provide a fake implementation and define a fake function return.
+We can spy on existing object or we can mock it ourselves
+
+describe("CalculatorService", () => {
+  it("should add two numbers", () => {
+    //const logger = new LoggerService();
+
+    spyOn(logger, "log");
+
+
+    // in the tested
+    // const logger = jasmine.createSpyObj("LoggerService", ["log"]);
+
+      return value if you need
+   // logger.log.and.returnValue()
+
+    // spyOn(logger, "log");
+
+    const calculatorService = new CalculatorService(logger);
+
+    const result = calculatorService.add(2, 2);
+
+    expect(result).toBe(4);
+
+    expect(logger.log).toHaveBeenCalledTimes(1);
+  });
+
 

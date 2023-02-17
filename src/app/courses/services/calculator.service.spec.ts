@@ -3,11 +3,17 @@ import { LoggerService } from "./logger.service";
 
 describe("CalculatorService", () => {
   it("should add two numbers", () => {
-    const calculatorService = new CalculatorService(new LoggerService());
+    const logger = jasmine.createSpyObj("LoggerService", ["log"]);
+
+    // spyOn(logger, "log");
+
+    const calculatorService = new CalculatorService(logger);
 
     const result = calculatorService.add(2, 2);
 
     expect(result).toBe(4);
+
+    expect(logger.log).toHaveBeenCalledTimes(2);
   });
 
   it("should add subtract numbers", () => {
