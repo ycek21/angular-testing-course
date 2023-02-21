@@ -74,3 +74,142 @@ describe("CalculatorService", () => {
   });
 
 
+REPETITIVE CODE IN EVERY TEST
+We can define beforeEach method to get rid of the duplicate code. Before each as the same suggests
+is executed before every single test. Which means in the example below it will be called twice.
+
+
+describe("CalculatorService", () => {
+  let calculatorService: CalculatorService;
+  let logger: LoggerService;
+
+  beforeEach(() => {
+    logger = jasmine.createSpyObj("LoggerService", ["log"]);
+
+    calculatorService = new CalculatorService(logger);
+  });
+
+  it("should add two numbers", () => {
+    const result = calculatorService.add(2, 2);
+
+    expect(result).toBe(4);
+
+    expect(logger.log).toHaveBeenCalledTimes(1);
+  });
+
+  it("should add subtract numbers", () => {
+    const result = calculatorService.subtract(2, 2);
+
+    expect(result).toBe(0, "unexpected subtraction result");
+
+    expect(logger.log).toHaveBeenCalledTimes(1);
+  });
+});
+
+
+USING DEPENDENCY INJECTION
+Previously we were manually creating services. We can use dependency injection to
+recreate standard environment.
+Using testBed we simulate DI. We inject the actual CalculatorService and the
+jasmine spy, which is a dependant service- logger service.
+After that we inject it.
+
+  beforeEach(() => {
+    logger = jasmine.createSpyObj("LoggerService", ["log"]);
+
+    TestBed.configureTestingModule({
+      providers: [
+        CalculatorService,
+        { provide: LoggerService, useValue: logger },
+      ],
+    });
+
+    calculatorService = TestBed.inject(CalculatorService);
+  });
+
+  it("should add two numbers", () => {
+    const result = calculatorService.add(2, 2);
+
+    expect(result).toBe(4);
+
+    expect(logger.log).toHaveBeenCalledTimes(1);
+  });
+
+  it("should add subtract numbers", () => {
+    const result = calculatorService.subtract(2, 2);
+
+    expect(result).toBe(0, "unexpected subtraction result");
+
+    expect(logger.log).toHaveBeenCalledTimes(1);
+  });
+});
+
+SUMMARIZE
+We define a series of functional specifications. So called it blocks. Their role is to
+test one functionality of the service/ component.
+
+Test consist of 3 element:
+-setting up the necessary things usually via beforeEach block
+-perform the operation we want to test
+-run a series of assertions that will pass or not - result.toBe itp.
+
+Always mock dependant dependencies. It's a key assumption, because we want to have complete isolation
+of the service/ component we test. Otherwise we would have integrations tests instead of unit.
+Test for one service should be implemented in a separate it block.
+
+
+Disabling test:
+xdescribe - disable whole block
+xit - disable particular test
+fdescribe - tylko te w tym describie
+fit - tak samo tylko dla it
+
+
+HTTP SERVICE TESTING
+request is mocked using  FLUSH method. It will pass values to the subscribe.
+Angular provides its own HttpClientTestingModule as well as the HttpTestingController
+
+
+import { TestBed } from "@angular/core/testing";
+import {
+  HttpClientTestingModule,
+  HttpTestingController,
+} from "@angular/common/http/testing";
+import { CoursesService } from "./courses.service";
+import { COURSES } from "../../../../server/db-data";
+
+describe("CoursesService", () => {
+  let coursesService: CoursesService;
+  let httpTestingController: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [
+        CoursesService,
+        // adding HttpClient would sent actual requests. We only want to mock it
+        // HttpClient
+      ],
+    });
+
+    coursesService = TestBed.inject(CoursesService);
+    httpTestingController = TestBed.inject(HttpTestingController);
+  });
+
+  it("should retrieve all courses", () => {
+    coursesService.findAllCourses().subscribe((courses) => {
+      expect(courses).toBeTruthy("No courses returned");
+      expect(courses.length).toBe(12, "Incorrect number of courses");
+
+      const course = courses.find((course) => course.id == 12);
+
+      expect(course.titles.description).toBe("Angular Testing Course");
+    });
+
+    const req = httpTestingController.expectOne("/api/courses");
+
+    expect(req.request.method).toEqual("GET");
+
+    req.flush({ payload: Object.values(COURSES) });
+  });
+});
