@@ -213,3 +213,165 @@ describe("CoursesService", () => {
     req.flush({ payload: Object.values(COURSES) });
   });
 });
+
+
+afterEach(() => {
+    httpTestingController.verify();
+  });
+
+
+TESTING POSTING RESOURCES
+
+  it("should save the course data", () => {
+    const changes: Partial<Course> = {
+      titles: { description: "Testing Course" },
+    };
+
+    coursesService.saveCourse(12, changes).subscribe((course) => {
+      expect(course.id).toBe(12);
+    });
+
+    const req = httpTestingController.expectOne("/api/courses/12");
+
+    expect(req.request.method).toEqual("PUT");
+    expect(req.request.body.titles.description).toEqual(
+      changes.titles.description
+    );
+
+    req.flush({
+      ...COURSES[12],
+      ...changes,
+    });
+  });
+
+TESTING POSTING WITH ERROR RETURNED
+  it("should give an error if save course fails", () => {
+    const changes: Partial<Course> = {
+      titles: { description: "Testing Course" },
+    };
+
+    coursesService.saveCourse(12, changes).subscribe(
+      () => {
+        fail("the save course opeartion should have failed");
+      },
+      (error: HttpErrorResponse) => {
+        expect(error.status).toBe(500);
+      }
+    );
+
+    const req = httpTestingController.expectOne("/api/courses/12");
+
+    expect(req.request.method).toEqual("PUT");
+
+    req.flush("Save course failed", {
+      status: 500,
+      statusText: "Internal server error",
+    });
+  });
+
+
+CHECKING HTTP PARAMETERS
+  it("sholud find a list of lessons", () => {
+    coursesService.findLessons(12).subscribe((lessons) => {
+      expect(lessons).toBeTruthy();
+      expect(lessons.length).toBe(3);
+    });
+
+    const req = httpTestingController.expectOne(
+      (req) => req.url == "/api/lessons"
+    );
+
+    expect(req.request.method).toEqual("GET");
+    expect(req.request.params.get("courseId")).toEqual("12");
+    expect(req.request.params.get("filter")).toEqual("");
+    expect(req.request.params.get("sortOrder")).toEqual("asc");
+    expect(req.request.params.get("pageNumber")).toEqual("0");
+    expect(req.request.params.get("pageSize")).toEqual("3");
+
+    req.flush({
+      payload: findLessonsForCourse(12).slice(0, 3),
+    });
+  });
+
+
+
+TESTING PRESENTIONAL COMPONENTS
+using waitForAsync is necessary, because without that the test would execute before the fixture and component would be initialized.
+
+
+
+describe("CoursesCardListComponent", () => {
+  let component: CoursesCardListComponent;
+  let fixture: ComponentFixture<CoursesCardListComponent>;
+  let el: DebugElement;
+
+
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [CoursesModule],
+    })
+      .compileComponents()
+      .then(() => {
+        fixture = TestBed.createComponent(CoursesCardListComponent);
+        component = fixture.componentInstance;
+        el = fixture.debugElement
+      });
+  }));
+
+  it("should create the component", () => {
+    expect(component).toBeTruthy();
+    console.log("component :>> ", component);
+  });
+
+  it("should display the course list", () => {
+    pending();
+  });
+
+  it("should display the first course", () => {
+    pending();
+  });
+});
+
+YOU HAVE TO MANUALLY DETECT CHANGES AFTER CHANGING COMPONENT'S INPUT.
+WHAT ARE WE DOING HERE. FIRST WE INITIALIZE COURSE PROPERTY, AFTER THAT WE DETECT CHANGES.
+THEN WE USE THE PREDEFINED DEBUGELEMENT AND WE QUERY APPROPRIATE CLASSES TO.
+
+  it("should display the first course", () => {
+    component.courses = Object.values(COURSES);
+
+    fixture.detectChanges();
+
+    const course = component.courses[0];
+
+    const card = el.query(By.css(".course-card:first-child")),
+      title = card.query(By.css("mat-card-title")),
+      image = card.query(By.css("img"));
+
+    expect(card).toBeTruthy("First course doesn't exist");
+    expect(title.nativeElement.textContent).toBe(course.titles.description);
+    expect(image.nativeElement.src).toBe(course.iconUrl);
+  });
+
+TESTING SMART COMPONENT
+
+describe("HomeComponent", () => {
+  let fixture: ComponentFixture<HomeComponent>;
+  let component: HomeComponent;
+  let el: DebugElement;
+
+  beforeEach(waitForAsync(() => {
+    const coursesServiceSpy = jasmine.createSpyObj("CoursesService", [
+      "findAllCourses",
+    ]);
+
+    TestBed.configureTestingModule({
+      imports: [CoursesModule, NoopAnimationsModule],
+      providers: [{ provide: CoursesService, useValue: coursesServiceSpy }],
+    })
+      .compileComponents()
+      .then(() => {
+        fixture = TestBed.createComponent(HomeComponent);
+        component = fixture.componentInstance;
+        el = fixture.debugElement;
+      });
+  }));
